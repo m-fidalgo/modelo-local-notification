@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from "react";
-import { Text, View, Button, Platform, Alert, Linking } from "react-native";
+import React, { useEffect, useState } from "react";
+import { View, Button, Platform, Alert, Linking } from "react-native";
 import * as Notifications from "expo-notifications";
 import * as IntentLauncher from "expo-intent-launcher";
 import * as Application from "expo-application";
@@ -64,55 +64,62 @@ async function getPermissionsForNotification() {
 }
 
 export default function App() {
-  const [notification, setNotification] = useState(false);
-  const notificationListener = useRef();
-  const responseListener = useRef();
+  const revisionDate = new Date("2021-01-19");
+  const op = "Antes";
+  const subject = "Geografia";
 
   useEffect(() => {
     getPermissionsForNotification();
     //arrumar
     Notifications.setBadgeCountAsync(0);
-
-    notificationListener.current = Notifications.addNotificationReceivedListener(
-      (notification) => {
-        setNotification(notification);
-      }
-    );
-
-    responseListener.current = Notifications.addNotificationResponseReceivedListener(
-      (response) => {
-        console.log(response);
-      }
-    );
-
-    return () => {
-      Notifications.removeNotificationSubscription(notificationListener);
-      Notifications.removeNotificationSubscription(responseListener);
-    };
   }, []);
 
-  async function scheduleNotification() {
-    let dateStudy = new Date().getTime();
-    let dateSchedule = new Date().getTime();
-    let op = "No dia";
-    let trigger;
+  async function scheduleNotification(revisionDate, op, subject) {
+    const currentDate = new Date();
+    const scheduledDate = new Date();
+
+    scheduledDate.setFullYear(revisionDate.getUTCFullYear());
+    scheduledDate.setMonth(revisionDate.getUTCMonth());
+    scheduledDate.setHours(10);
+    scheduledDate.setMinutes(7);
+    scheduledDate.setSeconds(0);
+    scheduledDate.setMilliseconds(0);
+
+    let message;
 
     if (op === "Antes") {
-      trigger = (dateSchedule - 24 * 60 * 60 * 1000 - dateStudy) / 1000;
+      scheduledDate.setDate(revisionDate.getUTCDate() - 1);
+      message = [
+        `Não se esqueça de revisar ${subject} amanhã!`,
+        `Amanhã é dia de revisar ${subject}`,
+        `${subject} aaaaaa`,
+        `aaaaaaa ${subject}`,
+        `aaaaaaaaaaaaaaaa`,
+      ];
     }
     if (op === "No dia") {
-      trigger = (dateSchedule + 1000 - dateStudy) / 1000;
+      scheduledDate.setDate(revisionDate.getUTCDate());
+      message = [
+        `Hoje é dia de revisar ${subject}`,
+        `${subject} está te esperando. Vamos revisar?`,
+        `${subject} aaaaaa`,
+        `aaaaaaa ${subject}`,
+        `aaaaaaaaaaaaaaaa`,
+      ];
     }
+
+    const randomNumber = Math.floor(Math.random() * message.length);
 
     Notifications.scheduleNotificationAsync({
       content: {
-        title: "Remember to drink water!",
-        body: "body",
+        title: subject,
+        body: message[randomNumber],
         badge: parseInt((await Notifications.getBadgeCountAsync()) + 1),
         sound: true,
       },
       trigger: {
-        seconds: parseInt(trigger),
+        seconds:
+          parseInt(scheduledDate.getTime() - currentDate.getTime()) / 1000,
         repeats: false,
       },
     });
@@ -126,15 +133,9 @@ export default function App() {
         justifyContent: "space-around",
       }}
     >
-      <View style={{ alignItems: "center", justifyContent: "center" }}>
-        <Text>
-          Title: {notification && notification.request.content.title}{" "}
-        </Text>
-        <Text>Body: {notification && notification.request.content.body}</Text>
-      </View>
       <Button
         title="Press to Send Notification"
-        onPress={() => scheduleNotification()}
+        onPress={() => scheduleNotification(revisionDate, op, subject)}
       />
     </View>
   );
