@@ -38,7 +38,7 @@ async function getPermissionsForNotification() {
               } else {
                 const bundleIdentifier = Application.applicationId;
                 IntentLauncher.startActivityAsync(
-                  IntentLauncher.ACTION_APPLICATION_DETAILS_SETTINGS,
+                  IntentLauncher.APP_NOTIFICATION_SETTINGS,
                   {
                     data: `package:${bundleIdentifier}`,
                   }
@@ -64,7 +64,8 @@ async function getPermissionsForNotification() {
 }
 
 export default function App() {
-  const revisionDate = new Date("2021-01-19");
+  const [id, setId] = useState("");
+  const revisionDate = new Date("2021-01-21");
   const op = "Antes";
   const subject = "Geografia";
 
@@ -80,8 +81,8 @@ export default function App() {
 
     scheduledDate.setFullYear(revisionDate.getUTCFullYear());
     scheduledDate.setMonth(revisionDate.getUTCMonth());
-    scheduledDate.setHours(10);
-    scheduledDate.setMinutes(7);
+    scheduledDate.setHours(20);
+    scheduledDate.setMinutes(51);
     scheduledDate.setSeconds(0);
     scheduledDate.setMilliseconds(0);
 
@@ -110,7 +111,7 @@ export default function App() {
 
     const randomNumber = Math.floor(Math.random() * message.length);
 
-    Notifications.scheduleNotificationAsync({
+    let id = Notifications.scheduleNotificationAsync({
       content: {
         title: subject,
         body: message[randomNumber],
@@ -123,6 +124,12 @@ export default function App() {
         repeats: false,
       },
     });
+
+    return id;
+  }
+
+  async function cancelNotification(id) {
+    await Notifications.cancelScheduledNotificationAsync(id);
   }
 
   return (
@@ -135,7 +142,18 @@ export default function App() {
     >
       <Button
         title="Press to Send Notification"
-        onPress={() => scheduleNotification(revisionDate, op, subject)}
+        onPress={async () => {
+          let idNotification = await scheduleNotification(
+            revisionDate,
+            op,
+            subject
+          );
+          setId(idNotification);
+        }}
+      />
+      <Button
+        title="Press to Cancel Notification"
+        onPress={() => cancelNotification(id)}
       />
     </View>
   );
